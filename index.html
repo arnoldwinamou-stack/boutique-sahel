@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maison Sahel – Boutique en ligne</title>
+<style>
+  :root {
+    color-scheme: light;
+    --indigo: #1b2a6b;
+    --indigo-soft: #e8ecf8;
+    --mango: #f2b134;
+    --leaf: #1f7a5a;
+    --surface: #ffffff;
+    --page: #f3f5fa;
+    --ink: #14182b;
+    --muted: #5a6180;
+    --line: #d9deee;
+    --danger: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --indigo: #9fb0ff;
+      --indigo-soft: #232a4d;
+      --mango: #f2b134;
+      --leaf: #4cc29a;
+      --surface: #1a1f38;
+      --page: #11142a;
+      --ink: #eef0fa;
+      --muted: #a2a9c9;
+      --line: #2e365e;
+      --danger: #ff8a80;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--mango); outline-offset: 2px; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--indigo); }
+  .cart-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--indigo); color: var(--page); border: 0;
+    padding: 10px 16px; border-radius: 999px; font-weight: 700;
+  }
+  .cart-btn .count {
+    background: var(--mango); color: #14182b; border-radius: 999px;
+    min-width: 24px; height: 24px; display: grid; place-items: center; font-size: .85rem;
+  }
+
+  .hero {
+    position: relative; overflow: hidden; color: #fff;
+    background: var(--indigo-hero, #1b2a6b);
+    padding: 56px 20px 48px;
+  }
+  .hero svg.bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .35; }
+  .hero-inner { position: relative; max-width: 720px; margin: 0 auto; }
+  .hero h1 { font-size: clamp(2rem, 7vw, 3.4rem); line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
+  .hero p { margin-top: 14px; font-size: 1.05rem; max-width: 46ch; color: #dfe4fb; }
+  .hero a.cta {
+    display: inline-block; margin-top: 22px; background: var(--mango); color: #14182b;
+    padding: 13px 22px; border-radius: 10px; font-weight: 800; text-decoration: none;
+  }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 80px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip {
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 8px 16px; border-radius: 999px; font-weight: 600;
+  }
+  .chip[aria-pressed="true"] { background: var(--indigo); color: var(--page); border-color: var(--indigo); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+  .item { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .item .art { aspect-ratio: 4 / 3; width: 100%; display: block; }
+  .item .body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .item h3 { font-size: 1.02rem; font-weight: 700; }
+  .item .desc { color: var(--muted); font-size: .9rem; flex: 1; }
+  .price { font-size: 1.2rem; font-weight: 800; color: var(--indigo); }
+  .price small { font-size: .8rem; font-weight: 600; color: var(--muted); }
+  .stock { font-size: .85rem; font-weight: 600; color: var(--leaf); }
+  .stock.low { color: #b26a00; }
+  .stock.out { color: var(--danger); }
+  @media (prefers-color-scheme: dark) { .stock.low { color: #ffc266; } }
+  .add {
+    margin-top: 6px; border: 0; background: var(--mango); color: #14182b;
+    padding: 11px; border-radius: 10px; font-weight: 800;
+  }
+  .add:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+
+  /* Panier */
+  .overlay { position: fixed; inset: 0; background: rgba(10,12,30,.55); display: none; z-index: 20; }
+  .overlay.open { display: block; }
+  aside.cart {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 100%);
+    background: var(--surface); z-index: 30; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform .25s ease; border-left: 1px solid var(--line);
+  }
+  aside.cart.open { transform: none; }
+  @media (prefers-reduced-motion: reduce) { aside.cart { transition: none; } }
+  .cart header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .cart header h2 { font-size: 1.15rem; }
+  .close { background: none; border: 0; font-size: 1.6rem; color: var(--ink); line-height: 1; }
+  .lines { flex: 1; overflow-y: auto; padding: 8px 18px; }
+  .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+  .line { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .line .thumb { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; }
+  .line .thumb svg { width: 100%; height: 100%; display: block; }
+  .line .name { font-weight: 700; font-size: .95rem; }
+  .line .sub { color: var(--muted); font-size: .85rem; }
+  .qty { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .qty button { width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 800; }
+  .remove { background: none; border: 0; color: var(--danger); font-size: .85rem; font-weight: 600; }
+  .checkout { padding: 16px 18px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .checkout input {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1.5px solid var(--line);
+    background: var(--page); color: var(--ink); font: inherit;
+  }
+  .total { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; }
+  .order {
+    border: 0; background: var(--leaf); color: #fff; padding: 14px; border-radius: 10px; font-weight: 800; font-size: 1rem;
+  }
+  @media (prefers-color-scheme: dark) { .order { color: #0b1a14; } }
+  .order:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+  .hint { color: var(--danger); font-size: .85rem; min-height: 1.2em; }
+  footer { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 16px 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo">Maison Sahel</div>
+  <button class="cart-btn" id="openCart" aria-label="Ouvrir le panier">
+    Panier <span class="count" id="count">0</span>
+  </button>
+</header>
+
+<section class="hero">
+  <svg class="bg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" viewBox="0 0 600 300">
+    <defs>
+      <pattern id="heroPat" width="60" height="60" patternUnits="userSpaceOnUse">
+        <circle cx="30" cy="30" r="22" fill="none" stroke="#f2b134" stroke-width="4"/>
+        <circle cx="30" cy="30" r="10" fill="#f2b134"/>
+        <circle cx="0" cy="0" r="8" fill="#fff"/><circle cx="60" cy="0" r="8" fill="#fff"/>
+        <circle cx="0" cy="60" r="8" fill="#fff"/><circle cx="60" cy="60" r="8" fill="#fff"/>
+      </pattern>
+    </defs>
+    <rect width="600" height="300" fill="url(#heroPat)"/>
+  </svg>
+  <div class="hero-inner">
+    <h1>Tissus wax et mode, prix affichés, livraison en ville.</h1>
+    <p>Choisissez vos articles, voyez le prix exact en FCFA, puis envoyez votre commande directement sur WhatsApp.</p>
+    <a class="cta" href="#catalogue">Voir les articles</a>
+  </div>
+</section>
+
+<main id="catalogue">
+  <div class="filters" id="filters" role="group" aria-label="Filtrer par catégorie"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Paiement à la livraison ou par Mobile Money · Maison Sahel</footer>
+
+<div class="overlay" id="overlay"></div>
+<aside class="cart" id="cart" aria-label="Panier" aria-hidden="true">
+  <header>
+    <h2>Votre panier</h2>
+    <button class="close" id="closeCart" aria-label="Fermer le panier">×</button>
+  </header>
+  <div class="lines" id="lines"></div>
+  <div class="checkout">
+    <input id="clientName" type="text" placeholder="Votre nom" autocomplete="name">
+    <input id="clientPlace" type="text" placeholder="Quartier de livraison">
+    <div class="total"><span>Total</span><span id="total">0 FCFA</span></div>
+    <div class="hint" id="hint"></div>
+    <button class="order" id="orderBtn" disabled>Commander sur WhatsApp</button>
+  </div>
+</aside>
+
+<script>
+  /* ===== À MODIFIER : réglages de la boutique ===== */
+  const SHOP_NAME = "Maison Sahel";
+  const WHATSAPP_NUMBER = "23500000000"; // indicatif 235 + numéro, sans + ni espaces
+
+  // Chaque article : nom, catégorie, prix en FCFA, stock, description, motif et couleurs
+  const PRODUCTS = [
+    { id: 1,  name: "Pagne wax 6 yards – Soleil",   cat: "Tissus",     price: 15000, stock: 12, desc: "Coton wax épais, couleurs qui tiennent au lavage.", art: "circles",  c: ["#1b2a6b", "#f2b134", "#ffffff"] },
+    { id: 2,  name: "Pagne wax 6 yards – Savane",   cat: "Tissus",     price: 17500, stock: 4,  desc: "Motif géométrique vert et orange, qualité premium.", art: "diamonds", c: ["#1f7a5a", "#ef7d2d", "#fff3d6"] },
+    { id: 3,  name: "Bazin riche brodé (3 m)",      cat: "Tissus",     price: 28000, stock: 6,  desc: "Idéal pour boubou et grandes occasions.",           art: "waves",    c: ["#6b2a5e", "#f2b134", "#f7e3f0"] },
+    { id: 4,  name: "Robe wax coupe droite",        cat: "Vêtements",  price: 22000, stock: 8,  desc: "Taille M à XL, doublure légère, fermeture dos.",    art: "diamonds", c: ["#b3261e", "#f2b134", "#ffffff"] },
+    { id: 5,  name: "Chemise homme col mao",        cat: "Vêtements",  price: 12500, stock: 15, desc: "Coton léger, coupe droite, tailles S à XXL.",       art: "stripes",  c: ["#1b2a6b", "#8fa3f0", "#ffffff"] },
+    { id: 6,  name: "Ensemble enfant (2 pièces)",   cat: "Vêtements",  price: 9500,  stock: 0,  desc: "Haut et pantalon, de 4 à 10 ans.",                  art: "circles",  c: ["#1f7a5a", "#f2b134", "#ffffff"] },
+    { id: 7,  name: "Sac cabas en wax",             cat: "Accessoires",price: 8000,  stock: 20, desc: "Grand format, anses renforcées, poche intérieure.", art: "waves",    c: ["#ef7d2d", "#1b2a6b", "#fff3d6"] },
+    { id: 8,  name: "Foulard de tête assorti",      cat: "Accessoires",price: 3500,  stock: 30, desc: "Tissu doux, plusieurs couleurs disponibles.",       art: "stripes",  c: ["#6b2a5e", "#f2b134", "#ffffff"] },
+    { id: 9,  name: "Sandales cuir artisanales",    cat: "Accessoires",price: 11000, stock: 3,  desc: "Cuir cousu main, pointures 36 à 44.",               art: "diamonds", c: ["#7a4a1e", "#f2b134", "#f6e7d0"] }
+  ];
+  /* =============================================== */
+
+  const fmt = n => n.toLocaleString("fr-FR") + " FCFA";
+  const cart = {};            // { id: quantité }
+  let activeCat = "Tout";
+
+  function artSVG(type, c, id) {
+    const [a, b, d] = c;
+    const pid = "p" + id + type;
+    let shapes = "";
+    if (type === "circles") shapes = `<circle cx="20" cy="20" r="15" fill="none" stroke="${b}" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="${b}"/><circle cx="0" cy="0" r="5" fill="${d}"/><circle cx="40" cy="0" r="5" fill="${d}"/><circle cx="0" cy="40" r="5" fill="${d}"/><circle cx="40" cy="40" r="5" fill="${d}"/>`;
+    if (type === "diamonds") shapes = `<path d="M20 2 L38 20 L20 38 L2 20 Z" fill="none" stroke="${b}" stroke-width="3"/><path d="M20 12 L28 20 L20 28 L12 20 Z" fill="${d}"/>`;
+    if (type === "waves")    shapes = `<path d="M0 12 Q10 0 20 12 T40 12" fill="none" stroke="${b}" stroke-width="3"/><path d="M0 28 Q10 16 20 28 T40 28" fill="none" stroke="${d}" stroke-width="3"/>`;
+    if (type === "stripes")  shapes = `<rect x="0" y="0" width="8" height="40" fill="${b}"/><rect x="16" y="0" width="4" height="40" fill="${d}"/><rect x="28" y="0" width="8" height="40" fill="${b}"/>`;
+    return `<svg viewBox="0 0 120 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><pattern id="${pid}" width="40" height="40" patternUnits="userSpaceOnUse">${shapes}</pattern></defs><rect width="120" height="90" fill="${a}"/><rect width="120" height="90" fill="url(#${pid})"/></svg>`;
+  }
+
+  function renderFilters() {
+    const cats = ["Tout", ...new Set(PRODUCTS.map(p => p.cat))];
+    document.getElementById("filters").innerHTML = cats.map(c =>
+      `<button class="chip" data-cat="${c}" aria-pressed="${c === activeCat}">${c}</button>`).join("");
+    document.querySelectorAll(".chip").forEach(b => b.onclick = () => { activeCat = b.dataset.cat; renderFilters(); renderGrid(); });
+  }
+
+  function stockLabel(p) {
+    if (p.stock === 0) return `<span class="stock out">Rupture de stock</span>`;
+    if (p.stock <= 5) return `<span class="stock low">Plus que ${p.stock} en stock</span>`;
+    return `<span class="stock">En stock</span>`;
+  }
+
+  function renderGrid() {
+    const list = PRODUCTS.filter(p => activeCat === "Tout" || p.cat === activeCat);
+    document.getElementById("grid").innerHTML = list.map(p => `
+      <article class="item">
+        <div class="art">${artSVG(p.art, p.c, p.id)}</div>
+        <div class="body">
+          <h3>${p.name}</h3>
+          <p class="desc">${p.desc}</p>
+          <div class="price">${p.price.toLocaleString("fr-FR")} <small>FCFA</small></div>
+          ${stockLabel(p)}
+          <button class="add" data-id="${p.id}" ${p.stock === 0 ? "disabled" : ""}>Ajouter au panier</button>
+        </div>
+      </article>`).join("");
+    document.querySelectorAll(".add").forEach(b => b.onclick = () => addToCart(+b.dataset.id));
+  }
+
+  function addToCart(id) {
+    const p = PRODUCTS.find(x => x.id === id);
+    cart[id] = Math.min((cart[id] || 0) + 1, p.stock);
+    renderCart();
+    openCart();
+  }
+  function setQty(id, q) {
+    const p = PRODUCTS.find(x => x.id === id);
+    if (q <= 0) delete cart[id]; else cart[id] = Math.min(q, p.stock);
+    renderCart();
+  }
+
+  function renderCart() {
+    const ids = Object.keys(cart).map(Number);
+    const count = ids.reduce((s, id) => s + cart[id], 0);
+    const total = ids.reduce((s, id) => s + cart[id] * PRODUCTS.find(p => p.id === id).price, 0);
+    document.getElementById("count").textContent = count;
+    document.getElementById("total").textContent = fmt(total);
+    document.getElementById("orderBtn").disabled = count === 0;
+    const lines = document.getElementById("lines");
+    if (!ids.length) { lines.innerHTML = `<div class="empty">Votre panier est vide. Ajoutez un article pour commencer.</div>`; return; }
+    lines.innerHTML = ids.map(id => {
+      const p = PRODUCTS.find(x => x.id === id);
+      return `<div class="line">
+        <div class="thumb">${artSVG(p.art, p.c, "t" + p.id)}</div>
+        <div>
+          <div class="name">${p.name}</div>
+          <div class="sub">${fmt(p.price)} l'unité</div>
+          <div class="qty">
+            <button data-m="${id}" aria-label="Retirer un">−</button>
+            <span>${cart[id]}</span>
+            <button data-p="${id}" aria-label="Ajouter un">+</button>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="name">${fmt(p.price * cart[id])}</div>
+          <button class="remove" data-r="${id}">Retirer</button>
+        </div>
+      </div>`;
+    }).join("");
+    lines.querySelectorAll("[data-m]").forEach(b => b.onclick = () => setQty(+b.dataset.m, cart[b.dataset.m] - 1));
+    lines.querySelectorAll("[data-p]").forEach(b => b.onclick = () => setQty(+b.dataset.p, cart[b.dataset.p] + 1));
+    lines.querySelectorAll("[data-r]").forEach(b => b.onclick = () => setQty(+b.dataset.r, 0));
+  }
+
+  const cartEl = document.getElementById("cart"), overlay = document.getElementById("overlay");
+  function openCart()  { cartEl.classList.add("open"); overlay.classList.add("open"); cartEl.setAttribute("aria-hidden", "false"); }
+  function closeCart() { cartEl.classList.remove("open"); overlay.classList.remove("open"); cartEl.setAttribute("aria-hidden", "true"); }
+  document.getElementById("openCart").onclick = openCart;
+  document.getElementById("closeCart").onclick = closeCart;
+  overlay.onclick = closeCart;
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeCart(); });
+
+  document.getElementById("orderBtn").onclick = () => {
+    const name = document.getElementById("clientName").value.trim();
+    const place = document.getElementById("clientPlace").value.trim();
+    const hint = document.getElementById("hint");
+    if (!name || !place) { hint.textContent = "Indiquez votre nom et votre quartier de livraison."; return; }
+    hint.textContent = "";
+    const ids = Object.keys(cart).map(Number);
+    const total = ids.reduce((s, id) => s + cart[id] * PRODUCTS.find(p => p.id === id).price, 0);
+    const rows = ids.map(id => {
+      const p = PRODUCTS.find(x => x.id === id);
+      return `- ${cart[id]} x ${p.name} : ${fmt(p.price * cart[id])}`;
+    }).join("\n");
+    const msg = `Bonjour ${SHOP_NAME}, je voudrais commander :\n${rows}\n\nTotal : ${fmt(total)}\nNom : ${name}\nLivraison : ${place}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  renderFilters();
+  renderGrid();
+  renderCart();
+</script>
+</body>
+</html>
